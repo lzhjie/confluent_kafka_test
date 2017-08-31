@@ -185,7 +185,8 @@ if __name__ == "__main__":
             k, v = msg_generator.hook_get_key_and_value(i)
             producer.produce(topic, v)
         except:
-            producer.flush()  # fix issue: message lost
+            producer.flush()  
+            continue # fix issue: message lost 
         i += 1
     producer.flush()
     cost = max(watch.seconds_float(), 0.001)

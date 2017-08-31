@@ -3,6 +3,29 @@ import os, sys, datetime
 from confluent_kafka import Producer, Consumer, TopicPartition
 
 
+class StopWatch:
+    def __init__(self):
+        self.__start = datetime.datetime.now()
+
+    def time(self):
+        return str(datetime.datetime.now() - self.__start)
+
+    def reset(self):
+        self.__start = datetime.datetime.now()
+
+    def seconds(self):
+        delta = datetime.datetime.now() - self.__start
+        return "%d.%03d" % (delta.seconds, delta.microseconds / 1000)
+
+    def seconds_float(self):
+        delta = datetime.datetime.now() - self.__start
+        return delta.total_seconds()
+
+    def seconds_int(self):
+        delta = datetime.datetime.now() - self.__start
+        return delta.seconds
+
+
 def string2int(s):
     return int(s)
 
@@ -155,17 +178,19 @@ if __name__ == "__main__":
             break
 
     print("produce...., start offset: " + str(start_offset))
+    watch = StopWatch()
     i = 0
     while i < size:
         try:
             k, v = msg_generator.hook_get_key_and_value(i)
             producer.produce(topic, v)
         except:
-            producer.flush()
-            continue # fix issue：message lost
+            producer.flush()  # fix issue: message lost
         i += 1
     producer.flush()
-
+    cost = max(watch.seconds_float(), 0.001)
+    print("produce  cost: %.3fs, qps: %d" % (cost, int(i / cost)))
+    watch.reset()
     i = 0
     while i < size:
         k, v = msg_generator.hook_get_key_and_value(i)
@@ -180,6 +205,9 @@ if __name__ == "__main__":
             print("mine:%s, theirs:%s" % (v, msg.value().decode()))
             break
         i += 1
+
+    cost = max(watch.seconds_float(), 0.001)
+    print("consume  cost: %.3fs, qps: %d" % (cost, int(i / cost)))
 
     if i < size:  # error, print 10 records
         offset = start_offset + max(0, i - 5)
@@ -217,6 +245,7 @@ def kafka_server_config():
     zookeeper.connection.timeout.ms=6000
     """
     pass
+
 
 def my_test_data():
     """

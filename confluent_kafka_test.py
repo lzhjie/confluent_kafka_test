@@ -162,6 +162,7 @@ if __name__ == "__main__":
             producer.produce(topic, v)
         except:
             producer.flush()
+            continue
         i += 1
     producer.flush()
 

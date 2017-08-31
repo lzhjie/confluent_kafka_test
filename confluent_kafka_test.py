@@ -162,7 +162,7 @@ if __name__ == "__main__":
             producer.produce(topic, v)
         except:
             producer.flush()
-            continue
+            continue # fix issue：message lost
         i += 1
     producer.flush()
 
